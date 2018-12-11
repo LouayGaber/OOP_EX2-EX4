@@ -4,9 +4,21 @@ import Geom.Point3D;
 
 public class MyCoords implements coords_converter {
 	
+	/**
+	 * Author : Louay 
+	 * This class implement coords_converter functions . 
+	 * 
+	 */
+	
 	public static final int RADUIS_EARTH = 6371000;//Earth Radius 
 
 
+	/**
+	 * This function can add or give the new point by givin an 3d point and distance or vector in meter 
+	 * @param gps : The 3d point (gps ) that we want to add or change there place 
+	 * @param local_vector_in_meter : a vector in meter 
+	 * @return The new 3d point .
+	 */
 	@Override
 	public Point3D add(Point3D gps, Point3D local_vector_in_meter) {
 		Point3D Ngps=gpstoxyz(gps);
@@ -18,6 +30,11 @@ public class MyCoords implements coords_converter {
 		
 	}
 
+	/**
+	 * This function calculate the 3d distance between 2 gps points . 
+	 * by converting the 2 gps point to xyz coordinate then implement the distance3d of the POINT3D class 
+	 */
+	
 	@Override
 	public double distance3d(Point3D gps0, Point3D gps1) {
 		
@@ -27,6 +44,11 @@ public class MyCoords implements coords_converter {
 
 	}
 
+	/**
+	 * This function calculate the 3DVECTOR  by giving 2 Gps points 
+	 * the 2 points are converted to an xyz coordinate 
+	 * then calculate the difference betweeen every axis coordinate 
+	 */
 	@Override
 	public Point3D vector3D(Point3D gps0, Point3D gps1) {
 		
@@ -41,7 +63,8 @@ public class MyCoords implements coords_converter {
 		
 		return v;
 	}
-
+	/** computes the polar representation of the 3D vector be gps0-->gps1 
+	 * Note: this method should return an azimuth (aka yaw), elevation (pitch), and distance*/
 	@Override
 	public double[] azimuth_elevation_dist(Point3D gps0, Point3D gps1) {
 		
@@ -53,6 +76,9 @@ public class MyCoords implements coords_converter {
 		return result;
 	}
 
+	/**
+	 * This basic function check the validate of the Gps point 
+	 */
 	@Override
 	public boolean isValid_GPS_Point(Point3D p) {
 		return (p.x()>-180&&p.x()<180 && p.y()>-90&&p.y()<90 && p.z()>-450&& p.z()<Double.POSITIVE_INFINITY);
