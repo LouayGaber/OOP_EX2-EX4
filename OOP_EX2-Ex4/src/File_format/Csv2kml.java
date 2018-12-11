@@ -1,180 +1,142 @@
 package File_format;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-import javax.xml.parsers.*;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import java.util.Random;
 
-import org.w3c.dom.*;
+import GIS.GIS_element_class;
+import GIS.GIS_layer_class;
+import GIS.GIS_project_class;
 
-//https://stackoverflow.com/questions/12120055/conversion-of-csv-to-xml-with-java
 
+/**
+
+ *
+ */
 public class Csv2kml {
-	// Protected Properties
-	protected DocumentBuilderFactory domFactory = null;
-	protected DocumentBuilder domBuilder = null;
 
-	public Csv2kml() {
-		try {
-			domFactory = DocumentBuilderFactory.newInstance();
-			domBuilder = domFactory.newDocumentBuilder();
-		} 
-		catch (FactoryConfigurationError exp) {
-			System.err.println(exp.toString());
-		} 
-		catch (ParserConfigurationException exp) {
-			System.err.println(exp.toString());
-		} 
-		catch (Exception exp) {
-			System.err.println(exp.toString());
+
+/**
+ * This class convert an a csv file to a kml file by saving the csv file that text  separted by comma "," 
+ * to a Kml file 
+ * 
+ * @param file : CSV file 
+ * @return list of string of Data for the given file  
+ * @throws IOException
+ * Helped source : https://stackoverflow.com/questions/37941909/read-and-write-csv-file-using-java
+ */
+	public static List<String[]> readFile(File file) throws IOException {
+
+
+		List<String[]> result = new ArrayList<String[]>();
+
+		FileReader fr = new FileReader(file);
+		BufferedReader br = new BufferedReader(fr);
+		for (String line = br.readLine(); line != null; line = br.readLine()) {
+			result.add(line.split(","));
+
 		}
+		br.close();
+		fr.close();
+		return result;
 	}
-	public int convertFile(String csvFileName, String xmlFileName, String delimiter) {
-		int rowsCount = -1;
-		try {
-			Document newDoc = domBuilder.newDocument();
-			// Root element
-			Element rootElement = newDoc.createElement("Folder");
-			newDoc.appendChild(rootElement);
-			Element curElem = newDoc.createElement("name");
-			curElem.appendChild(newDoc.createTextNode(csvFileName.substring(0, csvFileName.length() - 4)));
-			rootElement.appendChild(curElem);
-			// Read csv file
-			BufferedReader csvReader;
-			csvReader = new BufferedReader(new FileReader(csvFileName));
-			int fieldCount = 0;
-			String[] csvFields = null;
-			StringTokenizer stringTokenizer = null;
-			String firstLine = csvReader.readLine();//TODO save as layer metadata
 
-			// Assumes the second line in CSV file is column/field names
-			// The column names are used to name the elements in the XML file,
-			// avoid the use of Space or other characters not suitable for XML element
-			// naming
+/**
+ * Get a list with the read data from a List file, Send to Gis
+ * @param result List<String[]> of Data for file 
+ * @return GIS_Layer_using with the csv data
+ * @throws ParseException 
+ */
+	public static GIS_layer_class ReadCsv_Layer(List<String[]> result) throws ParseException
+	{
+		GIS_layer_class myLayer = new GIS_layer_class();
+		// Add color Random
+		String Color []= {"yellow","red","black","green","blue"};
+		int indx = new Random().nextInt(Color.length);
+		String random = (Color[indx]);
 
-			String curLine = csvReader.readLine();
-			if (curLine != null) {
-				// how about other form of csv files?
-				stringTokenizer = new StringTokenizer(curLine, delimiter);
-				fieldCount = stringTokenizer.countTokens();
-				if (fieldCount > 0) {
-					csvFields = new String[fieldCount];
-					int i = 0;
-					while (stringTokenizer.hasMoreElements())
-						csvFields[i++] = String.valueOf(stringTokenizer.nextElement());
-				}
-			}
-
-			// At this point the coulmns are known, now read data by lines
-			while ((curLine = csvReader.readLine()) != null) {
-				stringTokenizer = new StringTokenizer(curLine, delimiter);
-				fieldCount = stringTokenizer.countTokens();
-				if (fieldCount > 0) {
-					Element rowElement = newDoc.createElement("Placemark");
-					int i = 0;
-					String lat = null;
-					String lon = null;
-					Map<String, String> desc = new HashMap<String, String>();
-
-					while (stringTokenizer.hasMoreElements()) {
-						try {
-
-							String curValue = String.valueOf(stringTokenizer.nextElement());
-							String fieldName = csvFields[i++];
-							if (fieldName.equals("SSID")) {
-								fieldName = "name";
-								Element curElement = newDoc.createElement(fieldName);
-								CDATASection cdata = newDoc.createCDATASection(curValue);
-								curElement.appendChild(cdata);
-								rowElement.appendChild(curElement);
-
-							}
-							else if (fieldName.equals("CurrentLatitude")) {
-								lat = curValue;
-							}
-							else if (fieldName.equals("CurrentLongitude")) {
-								lon = curValue;
-							}
-							else {
-								desc.put(fieldName, curValue);
-//								Element curElement = newDoc.createElement(fieldName);
-//								curElement.appendChild(newDoc.createTextNode(curValue));
-//								rowElement.appendChild(curElement);
-							}
-							
-							if (lat != null && lon != null) {
-								Element curElement = newDoc.createElement("Point");
-								Element coords = newDoc.createElement("coordinates");
-								curValue = lon + "," + lat;
-								coords.appendChild(newDoc.createTextNode(curValue));
-								curElement.appendChild(coords);
-								rowElement.appendChild(curElement);
-								lat = null;
-								lon = null;
-							}
-
-						} catch (Exception exp) {
-						}
-					}
-					
-					Element curElement = newDoc.createElement("description");
-					String desc_str = "";
-					boolean first = true;
-					for (String key : desc.keySet()) {
-						if (!first) {
-							desc_str += "<br/>";
-						}
-						String value = desc.get(key);
-						desc_str += key;
-						desc_str += ": <b>" + value + "</b>";
-						first = false;
-
-					}
-					CDATASection cdata = newDoc.createCDATASection(desc_str);
-					curElement.appendChild(cdata);
-					rowElement.appendChild(curElement);
-					
-					rootElement.appendChild(rowElement);
-					rowsCount++;
-				}
-			}
-			csvReader.close();
-
-			// Save the document to the disk file
-			TransformerFactory tranFactory = TransformerFactory.newInstance();
-			Transformer aTransformer = tranFactory.newTransformer();
-			aTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			aTransformer.setOutputProperty(OutputKeys.METHOD, "xml");
-			aTransformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-			Source src = new DOMSource(newDoc);
-			Result result = new StreamResult(new File(xmlFileName));
-			aTransformer.transform(src, result);
-			rowsCount++;
-
-			// Output to console for testing
-			// Result result = new StreamResult(System.out);
-
-		} catch (IOException exp) {
-			System.err.println(exp.toString());
-		} catch (Exception exp) {
-			System.err.println(exp.toString());
+		for (int i = 2; i < result.size(); i++) {
+			String[] s = result.get(i);
+			GIS_element_class row  =new GIS_element_class(s[0],s[1],s[2],s[4],s[5],s[6],s[7],s[8],s[9],s[10]);
+			
+			row.getData().setUTC(s[3]);
+			row.getData().setColor(random);
+			myLayer.add(row);
 		}
-		return rowsCount;
-		// "XLM Document has been created" + rowsCount;
+		//Add color to the  Layer
+		myLayer.get_Meta_data().setColor(random);
+		return myLayer;
+
+	}
+	/**
+	 * The main function to convert a csv file to an kml file 
+	 * @param Data :the list of the data 
+	 * @param output : the file name include the path of the file to be exported in .
+	 * @return A kml file in the given output path . like : C:\\Users\\Louay\\Desktop\\test.kml.
+	 */
+	public static void to_KML(List<String[]> Data, String output) {
+
+
+		ArrayList<String> content = new ArrayList<String>();
+		String start = 
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" + 
+						"<kml xmlns=\"http://www.opengis.net/kml/2.2\"><Document><Style id=\"red\">\r\n" + 
+						"<IconStyle><Icon><href>http://maps.google.com/mapfiles/ms/icons/red-dot.png</href></Icon></IconStyle>\r\n" + 
+						"</Style><Style id=\"yellow\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/ms/icons/yellow-dot.png</href></Icon></IconStyle>\r\n" + 
+						"</Style><Style id=\"green\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/ms/icons/green-dot.png</href></Icon></IconStyle></Style>\r\n" + 
+						"\r\n" + 
+						"\r\n" + 
+						"<Folder><name>Wifi Networks</name>\n\n";
+		content.add(start);
+		String[] nameData = Data.get(1);
+		String end = "</Folder>\n" + 
+				"</Document>\n</kml>";
+		try{
+			FileWriter fw = new FileWriter(output);
+			BufferedWriter bw = new BufferedWriter(fw);
+			for (int i = 2; i < Data.size(); i++) {
+				String[] s = Data.get(i);
+
+				String Element ="<Placemark>\n" +
+						"<name><![CDATA["+s[1]+"]]></name>\n" +
+						"<description>"+
+						"<![CDATA[B"
+						+nameData[0]+": <b>"+s[0]+" </b><br/>"
+						+nameData[2]+": <b>"+s[2]+" </b><br/>"
+						+nameData[3]+": <b>"+s[3]+" </b><br/>" 
+						+nameData[4]+": <b>"+s[4]+" </b><br/>"
+						+nameData[5]+": <b>"+s[5]+" </b><br/>" 
+						+nameData[6]+": <b>"+s[6]+" </b><br/>"
+						+nameData[7]+": <b>"+s[7]+" </b><br/>"
+						+nameData[8]+": <b>"+s[8]+" </b><br/>" 
+						+nameData[9]+": <b>"+s[9]+" </b><br/>" 
+						+nameData[10]+": <b>"+s[10]+" </b><br/>" 
+
+						+"]]></description>\n" +
+						"<Point>\n" +
+						"<coordinates>"+s[7]+","+s[6]+"</coordinates>" +
+						"</Point>\n" +
+						"</Placemark>\n";
+
+
+				content.add(Element);
+
+
+			}
+			content.add(end);
+			bw.write(String.join("\n", content));
+			System.out.println("Operation Complete");
+			bw.close();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
