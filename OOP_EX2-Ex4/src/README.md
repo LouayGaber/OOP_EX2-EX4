@@ -3,7 +3,7 @@ This Github project is an educational example for using git & github as part of 
 
 OOP_EX2-EX4 Project Document :-
 
-ID : 318205614
+
 NAME : Louay@.
 
 OOP_EX2-Ex4
