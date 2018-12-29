@@ -3,17 +3,24 @@ package File_format;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import Coords.MyCoords;
 import GIS.GIS_element_class;
 import GIS.GIS_layer_class;
 import GIS.GIS_project_class;
+import GUI.Map;
+import Geom.Fruit;
+import Geom.Packman;
+import Geom.Point3D;
 
 
 /**
@@ -32,6 +39,7 @@ public class Csv2kml {
  * @throws IOException
  * Helped source : https://stackoverflow.com/questions/37941909/read-and-write-csv-file-using-java
  */
+	public Map map=new Map();
 	public static List<String[]> readFile(File file) throws IOException {
 
 
@@ -75,6 +83,35 @@ public class Csv2kml {
 		return myLayer;
 
 	}
+	
+	
+	public static List<String[]> readCsvGame(String file) throws IOException  {
+
+		List<String[]> result = new ArrayList<String[]>();
+
+		FileReader fr = new FileReader(file);
+		BufferedReader br = new BufferedReader(fr);
+
+		for (String line = br.readLine(); line != null; line = br.readLine()) {
+			result.add(line.split(","));
+
+		}
+
+
+		br.close();
+		fr.close();
+		return result;
+	}
+		
+	
+	 
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * The main function to convert a csv file to an kml file 
 	 * @param Data :the list of the data 
@@ -139,4 +176,85 @@ public class Csv2kml {
 			e.printStackTrace();
 		}
 	}
+	
+	public void writeCsv(ArrayList<Packman> Packmans,ArrayList<Fruit> Fruits) throws FileNotFoundException {
+
+		String outputPath="Output.csv";
+	     PrintWriter pw = new PrintWriter(new File(outputPath));
+	        StringBuilder sb = new StringBuilder();
+	        sb.append("Type");
+	        sb.append(',');
+	        sb.append("id");
+	        sb.append(',');
+	        sb.append("Lat");
+	        sb.append(',');
+	        sb.append("Lon");
+	        sb.append(',');
+	        sb.append("Alt");
+	        sb.append(',');
+	        sb.append("Speed/Weight");
+	        sb.append(',');
+	        sb.append("Radius");
+	        sb.append(",");
+	        sb.append(Packmans.size());
+	        sb.append(",");
+	        sb.append(Fruits.size());
+	        sb.append('\n');
+	        
+	        for(Packman packman :Packmans) {
+	        	sb.append("P");
+	        	sb.append(",");
+	        	sb.append(packman.getId());
+	        	sb.append(",");
+	        	sb.append(packman.getLocation().x());
+	        	sb.append(",");
+	        	sb.append(packman.getLocation().y());
+	        	sb.append(",");
+	        	sb.append(packman.getLocation().z());
+	        	sb.append(",");
+	        	sb.append(packman.getSpeed());
+	        	sb.append(",");
+	        	sb.append(packman.getRadius());
+	        	sb.append("\n");
+	        	
+	        	
+	        	
+	        }
+	        for(Fruit fruit: Fruits) {
+	        	sb.append("F");
+	        	sb.append(",");
+	        	sb.append(fruit.getId());
+	        	sb.append(",");
+	        	sb.append(fruit.getFlocation().x());
+	        	sb.append(",");
+	        	sb.append(fruit.getFlocation().y());
+	        	sb.append(",");
+	        	sb.append(fruit.getFlocation().z());
+	        	sb.append(",");
+	        	sb.append(fruit.getWeight());
+	        	sb.append("\n");
+	        	
+	        	
+	        	
+	        	
+	        }
+
+	        pw.write(sb.toString());
+	        pw.close();
+	        System.out.println("done!");
+		
+		
+		
+		
+		
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 }

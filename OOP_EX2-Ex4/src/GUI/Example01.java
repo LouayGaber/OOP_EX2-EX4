@@ -23,6 +23,11 @@ import javax.swing.JFrame;
 
 public class Example01 extends JFrame {
 /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+/**
  * Instantiates an Example01 object.
  **/
 public static void main(String args[]) {
